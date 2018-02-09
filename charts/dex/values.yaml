@@ -1,0 +1,78 @@
+# Default values for dex.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+image:
+  repository: pwillie/dex
+  tag: v2.9.0-0pwillie1
+  pullPolicy: Always
+service:
+  name: dex
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 5556
+  telemetryPort: 5558
+ingress:
+  enabled: false
+  # Used to create an Ingress record.
+  hosts:
+    # - dex.example.com
+  annotations:
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  tls:
+    # Secrets must be manually created in the namespace.
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+rbac:
+  create: false
+  role:
+    - apiGroups: ["dex.coreos.com"]
+      resources: ["*"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  clusterRole:
+    - apiGroups: ["apiextensions.k8s.io"]
+      resources: ["customresourcedefinitions"]
+      verbs: ["create", "get", "list", "watch"]
+config:
+  issuer: https://dex.example.com/dex
+  connectors: []
+  # - type: onelogin
+  #   id: onelogin
+  #   name: Onelogin
+  #   config:
+  #     subdomain: $ONELOGIN_SUBDOMAIN
+  #     apiId: $ONELOGIN_API_ID
+  #     apiSecret: $ONELOGIN_API_SECRET
+  #     clientID: $ONELOGIN_CLIENT_ID
+  #     clientSecret: $ONELOGIN_CLIENT_SECRET
+  #     redirectURI: https://dex.example.com/dex/callback
+  skipApprovalScreen: true
+  staticClients: []
+  # - id: example-app
+  #   redirectURIs:
+  #   - 'http://127.0.0.1:5555/callback'
+  #   name: 'Example Application'
+  #   secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+  # Options for controlling the logger.
+  logger:
+    # level: "debug"
+    # format: "text" # can also be "json"
+secrets: {}
+  # onelogin.subdomain:
+  # onelogin.api.id:
+  # onelogin.api.secret:
+  # onelogin.client.id:
+  # onelogin.client.secret:

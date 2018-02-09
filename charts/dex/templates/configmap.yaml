@@ -1,0 +1,39 @@
+{{- if .Values.config -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "dex.fullname" . }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    app: {{ template "dex.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+data:
+  config.yaml: |
+    issuer: {{.Values.config.issuer}}
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+    {{- if .Values.config.logger }}
+    logger:
+      level: {{ .Values.config.logger.level }}
+      format: {{ .Values.config.logger.format }}
+    {{- end }}
+    web:
+      http: 0.0.0.0:{{ .Values.service.internalPort }}
+    telemetry:
+      http: 0.0.0.0:{{ .Values.service.telemetryPort }}
+    connectors:
+    {{- range $key, $connector := .Values.config.connectors }}
+    -
+{{ toYaml $connector | indent 6 }}
+    {{- end }}
+    oauth2:
+      skipApprovalScreen: {{ default true .Values.config.skipApprovalsScreen }}
+    staticClients:
+    {{- range $key, $client := .Values.config.staticClients }}
+    -
+{{ toYaml $client | indent 6 }}
+    {{- end }}
+{{- end }}

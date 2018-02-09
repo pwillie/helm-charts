@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "oidc-ingress.fullname" . }}-controller
+  labels:
+    app: {{ template "oidc-ingress.name" . }}-controller
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.controller.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "oidc-ingress.name" . }}-controller
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.rbac.create }}
+      serviceAccountName: {{ template "oidc-ingress.fullname" . }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+          imagePullPolicy: {{ .Values.controller.image.pullPolicy }}
+          args:
+            - -logtostderr
+            - -authns={{ .Release.Namespace }}
+            - -authport={{ .Values.service.externalPort }}
+            - -authsvc={{ .Values.service.name }}
+          resources:
+{{ toYaml .Values.controller.resources | indent 12 }}
+    {{- if .Values.controller.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.controller.nodeSelector | indent 8 }}
+    {{- end }}

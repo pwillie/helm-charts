@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "oidc-ingress.fullname" . }}
+  labels:
+    app: {{ template "oidc-ingress.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.deployment.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "oidc-ingress.name" . }}
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Chart.Name "/templates/" "configmap.yaml") . | sha256sum }}{{ include (print $.Chart.Name "/templates/" "secret.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          args:
+            - -listen=:{{ .Values.service.internalPort }}
+          env:
+            {{- range $key, $value := .Values.config }}
+            - name: {{ $key | upper | replace "." "_" }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $.Chart.Name }}
+                  key: {{ $key }}
+            {{- end }}
+            {{- range $key, $value := .Values.secret }}
+            - name: {{ $key | upper | replace "." "_" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Chart.Name }}
+                  key: {{ $key }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.internalPort }}
+          livenessProbe:
+            httpGet:
+              path: /internal/healthz
+              port: {{ .Values.service.internalPort }}
+          readinessProbe:
+            httpGet:
+              path: /internal/healthz
+              port: {{ .Values.service.internalPort }}
+          resources:
+{{ toYaml .Values.deployment.resources | indent 12 }}
+    {{- if .Values.deployment.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.deployment.nodeSelector | indent 8 }}
+    {{- end }}

@@ -1,0 +1,75 @@
+# Default values for oidc-ingress.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+controller:
+  replicaCount: 1
+  image:
+    repository: pwillie/oidc-ingress-controller
+    tag: latest
+    pullPolicy: Always
+  resources: {}
+
+deployment:
+  replicaCount: 1
+  image:
+    repository: pwillie/oidc-ingress
+    tag: latest
+    pullPolicy: Always
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+
+config:
+  # clients: |
+  #   - provider: https://auth.provider1.com/
+  #     clientid: client_id_1
+  #     clientsecret: client_secret_1
+  #   - provider: https://auth.provider2.com/
+  #     clientid: client_id_2
+  #     clientsecret: client_secret_2
+
+createSecret: false
+secret: {}
+
+service:
+  name: oidc-ingress
+  type: ClusterIP
+  externalPort: 8000
+  internalPort: 8000
+
+# Only needed to add manual auth path Ingress records to hosted domains.
+# ie. not using the controller and annotations
+ingress:
+  enabled: false
+  hosts:
+    - example1.com
+    - example2.com
+  annotations:
+    # kubernetes.io/ingress.class: nginx
+  labels:
+    # stable.k8s.psg.io/kcm.class: default
+  tls:
+    # Secrets must be manually created in the namespace.
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+
+# needed by the controller running in a cluster with rbac enabled
+rbac:
+  create: false
+  role:
+    - apiGroups: ["extensions"]
+      resources: ["ingresses"]
+      verbs: ["list", "watch", "create", "update", "patch"]
+  clusterRole:
+    - apiGroups: ["extensions"]
+      resources: ["ingresses"]
+      verbs: ["list", "watch", "update", "patch"]

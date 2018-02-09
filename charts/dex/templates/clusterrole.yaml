@@ -1,0 +1,21 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: {{ template "dex.fullname" . }}
+  labels:
+    app: {{ template "dex.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+{{- range $rule := .Values.rbac.clusterRole }}
+  -
+  {{- range $ruleKey, $ruleArray := $rule }}
+    {{ $ruleKey }}:
+    {{- range $ruleValue := $ruleArray }}
+      - {{ $ruleValue | quote }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}

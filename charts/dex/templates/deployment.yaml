@@ -1,0 +1,61 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "dex.fullname" . }}
+  labels:
+    app: {{ template "dex.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}{{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        app: {{ template "dex.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.rbac.create }}
+      serviceAccountName: {{ template "dex.fullname" . }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/usr/local/bin/dex", "serve", "/etc/dex/cfg/config.yaml"]
+          env:
+          {{- range $key, $secret := .Values.secrets }}
+          - name: {{ $key | upper | replace "." "_" }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "dex.fullname" $ }}
+                key: {{ $key }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.internalPort }}
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: {{ .Values.service.telemetryPort }}
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: {{ .Values.service.telemetryPort }}
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/dex/cfg
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ template "dex.fullname" . }}
+          items:
+          - key: config.yaml
+            path: config.yaml
+    {{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+    {{- end }}
