@@ -9,6 +9,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.deployment.replicaCount }}
+  revisionHistoryLimit: {{ default 5 .Values.revisionHistoryLimit }}
   template:
     metadata:
       labels:
@@ -43,11 +44,11 @@ spec:
           livenessProbe:
             httpGet:
               path: /internal/healthz
-              port: {{ .Values.service.internalPort }}
+              port: {{ .Values.service.probePort }}
           readinessProbe:
             httpGet:
               path: /internal/healthz
-              port: {{ .Values.service.internalPort }}
+              port: {{ .Values.service.probePort }}
           resources:
 {{ toYaml .Values.deployment.resources | indent 12 }}
     {{- if .Values.deployment.nodeSelector }}

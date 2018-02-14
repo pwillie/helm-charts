@@ -38,12 +38,20 @@ config:
 
 createSecret: false
 secret: {}
+  # clients: |
+  #   - provider: https://auth.provider1.com/
+  #     clientid: client_id_1
+  #     clientsecret: client_secret_1
+  #   - provider: https://auth.provider2.com/
+  #     clientid: client_id_2
+  #     clientsecret: client_secret_2
 
 service:
   name: oidc-ingress
   type: ClusterIP
   externalPort: 8000
   internalPort: 8000
+  probePort: 9000
 
 # Only needed to add manual auth path Ingress records to hosted domains.
 # ie. not using the controller and annotations

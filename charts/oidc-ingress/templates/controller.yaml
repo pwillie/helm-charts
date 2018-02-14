@@ -9,6 +9,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.controller.replicaCount }}
+  revisionHistoryLimit: {{ default 5 .Values.revisionHistoryLimit }}
   template:
     metadata:
       labels:
